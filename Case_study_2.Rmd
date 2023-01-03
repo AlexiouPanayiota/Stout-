@@ -1,0 +1,180 @@
+---
+title: "Case Study 2"
+author: "Panayiota Harken Alexiou"
+date: "2023-01-02"
+mainfont: Times New Roman
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Calculations ##
+
+### Total revenue per year ###
+
+```{r, warning=FALSE,message=FALSE}
+data=read.csv("casestudy.csv")
+dim(data)
+
+```
+### Total revenue per year ###
+```{r, warning=FALSE,message=FALSE}
+library(tidyverse)
+library(ggthemes)
+
+year <- data %>%
+  select(year) %>%
+  unique()
+result <- tibble(year)
+result$year <- as.integer(result$year)
+
+total_revenue <- data %>%
+  group_by(year) %>%
+  mutate(total_revenue = sum(net_revenue)) %>%
+  select(total_revenue, year) %>%
+  unique()
+
+
+result=result %>% left_join(total_revenue, by="year")
+result
+
+
+```
+### New Customer Revenue ###
+
+```{r, message=FALSE,warning=FALSE}
+
+data <- data %>%
+  group_by(customer_email) %>%
+  mutate(new_customer = case_when(year == min(year) ~ TRUE, year > min(year) ~ FALSE))
+
+new_customer_revenue <- data %>%
+  filter(new_customer == TRUE) %>%
+  group_by(year) %>%
+  mutate(new_customer_revenue = sum(net_revenue)) %>%
+  select(new_customer_revenue, year) %>%
+  unique()
+
+result <- result %>%
+  left_join(new_customer_revenue, by = "year")
+
+result
+```
+### Existing Customer Growth ###
+
+
+```{r, message=FALSE,warning=FALSE}
+
+result <- result %>%
+  arrange(year) %>%
+  mutate(existing_customer_growth = (total_revenue - new_customer_revenue) - (lag(total_revenue) - lag(new_customer_revenue)))
+
+result
+
+```
+### Revenue lost from attrition ###
+
+
+```{r, message=FALSE,warning=FALSE}
+result <- result %>%
+  arrange(year) %>%
+  mutate(revenue_lost_attrition = lag(total_revenue) - (total_revenue - new_customer_revenue))
+
+result
+```
+### Existing customer output current year###
+
+
+```{r, message=FALSE,warning=FALSE}
+
+result <- result %>%
+  mutate(existing_customer_revenue = total_revenue - new_customer_revenue)
+
+result
+```
+
+### Existing customer output prior year###
+
+
+```{r, message=FALSE,warning=FALSE}
+
+result <- result %>%
+ arrange(year) %>%
+  mutate(existing_customer_revenue_prior = lag(total_revenue) - lag(new_customer_revenue))
+
+result
+```
+
+### Total Customers Current and Previous year ###
+
+
+```{r, message=FALSE,warning=FALSE}
+total_customers <- data%>%
+  group_by(year) %>%
+  mutate(total_customers = n()) %>%
+  select(total_customers, year) %>%
+  unique() %>%
+  ungroup() %>%
+  arrange(year) %>%
+  mutate(total_customers_prior = lag(total_customers))
+
+result <-result %>%
+  left_join(total_customers, by = "year")
+
+result
+
+```
+
+### New and Lost Customers ###
+
+
+```{r, message=FALSE,warning=FALSE}
+
+new_customers <- data %>%
+  filter(new_customer == TRUE) %>%
+  group_by(year) %>%
+  mutate(new_customers = n()) %>%
+  select(new_customers, year) %>%
+  unique()
+
+result <- result %>%
+  left_join(new_customers, by = "year")
+
+result <- result %>%
+  arrange(year) %>%
+  mutate(lost_customers = lag(total_customers) - (total_customers - new_customers))
+
+result 
+```
+
+## Visualization ##
+
+
+```{r, message=FALSE,warning=FALSE}
+
+ggplot(result, aes(x = factor(year), y = total_revenue)) + geom_bar(stat = "identity")
+
+```
+<br>
+It is obvious that on 2017 the total revenue is higher than the other years. The plot of new customers shows that new customers are more on 2017. 
+
+```{r, message=FALSE,warning=FALSE}
+
+ggplot(result, aes(x = factor(year), y = new_customers)) + geom_bar(stat = "identity")
+
+```
+<br>
+From the following plot it is obvious that the revenue is higher from the existing customers and not from the new ones on average. 
+
+```{r, message=FALSE,warning=FALSE}
+result %>%
+  ggplot() +
+  geom_line(aes(x = year, y = new_customer_revenue/new_customers, color = "New")) +
+  geom_line(aes(x = year, y = (total_revenue - new_customer_revenue)/ (total_customers - new_customers),  color = "Existing")) +
+  labs(x = "Year", y = "Average Revenue per Customer", title = "Average Revenue for New and Existing Customers") +
+  scale_color_manual("", breaks = c("Existing", "New"), values = c("Existing" = "magenta", "New" = "yellow2"))
+
+
+```
