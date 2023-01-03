@@ -1,0 +1,725 @@
+---
+title: "Loan data from Lending Club"
+date: "2022-12-29"
+author: "Panayiota Ismini Harken Alexiou"
+mainfont: Times New Roman
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Summary #
+
+In this report we obtain Loan data from Lending Club (https://www.openintro.org/data/index.php?data=loans_full_schema) and we create a model which predicts the interest rate of the loan using logistic regression. Although the model is not accurate and it is important to improve the cleaning of the data in order to ensure the accuracy and reliability of the analysis. 
+
+## Description of Data ##
+
+Below we can see the names and the explanation of the 55 variables as are described in https://www.openintro.org/data/index.php?data=loans_full_schema .
+
+
+
+
+<table style="border-collapse: collapse;">
+  <tr>
+    <th style="border: 1px solid black; padding: 5px; font-weight: bold;">Variable</th>
+    <th style="border: 1px solid black; padding: 5px; font-weight: bold;">Explanation</th>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">emp_title</td>
+    <td style="border: 1px solid black; padding: 5px;">The job title of the borrower</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">emp_length</td>
+    <td style="border: 1px solid black; padding: 5px;">The length of time the borrower has been employed</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">state</td>
+    <td style="border: 1px solid black; padding: 5px;">The borrower's state</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">homeownership</td>
+    <td style="border: 1px solid black; padding: 5px;">The ownership status of the borrower's residence</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">annual_income</td>
+    <td style="border: 1px solid black; padding: 5px;">The borrower's annual income</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">verified_income</td>
+    <td style="border: 1px solid black; padding: 5px;">Type of verification of the borrower's income</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">debt_to_income</td>
+    <td style="border: 1px solid black; padding: 5px;">The borrower's debt-to-income ratio</td>
+  </tr>
+  <tr>
+ <td style="border: 1px solid black; padding: 5px; font-weight: bold;">annual_income_joint</td>
+    <td style="border: 1px solid black; padding: 5px;">If this is a joint application, then the annual income of the two parties applying</td>
+  </tr>
+<tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">verification_income_joint</td>
+    <td style="border: 1px solid black; padding: 5px;">Type of verification of the joint income</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">debt_to_income_joint</td>
+    <td style="border: 1px solid black; padding: 5px;">Debt-to-income ratio for the two parties</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">delinq_2y</td> 
+<td style="border: 1px solid black; padding: 5px;">Delinquencies on lines of credit in the last 2 years</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">months_since_last_delinq</td>
+    <td style="border: 1px solid black; padding: 5px;">Months since the last delinquency</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">earliest_credit_line</td>
+    <td style="border: 1px solid black; padding: 5px;">Year of the borrower's earliest line of credit</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">inquiries_last_12m</td>
+    <td style="border: 1px solid black; padding: 5px;">Inquiries into the borrower's credit during the last 12 months</td>
+     <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">total_credit_lines</td>
+    <td style="border: 1px solid black; padding: 5px;">Total number of credit lines in the borrower's credit history</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">open_credit_lines</td>
+    <td style="border: 1px solid black; padding: 5px;">Number of currently open lines of credit</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">total_credit_limit</td>
+     <td style="border: 1px solid black; padding: 5px;">Total available credit, e.g. if only credit cards, then the total of all the credit limits. This excludes a mortgage</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">total_credit_utilized</td>
+    <td style="border: 1px solid black; padding: 5px;">Total credit balance, excluding a mortgage</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">num_collections_last_12m</td>
+    <td style="border: 1px solid black; padding: 5px;">Number of collections in the last 12 months. This excludes medical collections</td>
+  </tr>
+  <tr>
+ <td style="border: 1px solid black; padding: 5px; font-weight: bold;">num_historical_failed_to_pay</td>
+    <td style="border: 1px solid black; padding: 5px;">The number of derogatory public records, which roughly means the number of times the applicant failed to pay</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">months_since_90d_late</td>
+    <td style="border: 1px solid black; padding: 5px;">Months since the last time the applicant was 90 days late on a payment</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">current_accounts_delinq</td>
+    <td style="border: 1px solid black; padding: 5px;">Number of accounts where the applicant is currently delinquent</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">total_collection_amount_ever</td>
+<td style="border: 1px solid black; padding: 5px;">The total amount that the applicant has had against them in collections</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">current_installment_accounts</td>
+    <td style="border: 1px solid black; padding: 5px;">Number of installment accounts, which are (roughly) accounts with a fixed payment amount and period. A typical example might be a 36-month car loan</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">accounts_opened_24m</td>
+    <td style="border: 1px solid black; padding: 5px;">Number of new lines of credit opened in the last 24 months</td>
+  </tr>
+<tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">months_since_last_credit_inquiry</td>
+    <td style="border: 1px solid black; padding: 5px;">Number of months since the last credit inquiry on this applicant</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">num_satisfactory_accounts</td>
+    <td style="border: 1px solid black; padding: 5px;">Number of satisfactory accounts</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">num_accounts_120d_past_due</td>
+    <td style="border: 1px solid black; padding: 5px;">Number of current accounts that are 120 days past due</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">num_accounts_30d_past_due</td>
+    <td style="border: 1px solid black; padding: 5px;">Number of current accounts that are 30 days past due</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">num_active_debit_accounts</td>
+    <td style="border: 1px solid black; padding: 5px;">Number of currently active bank cards</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">total_debit_limit</td>
+    <td style="border: 1px solid black; padding: 5px;">Total of all bank card limits</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">num_total_cc_accounts</td>
+    <td style="border: 1px solid black; padding: 5px;">Total number of credit card accounts in the applicant's history</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">num_open_cc_accounts</td>
+    <td style="border: 1px solid black; padding: 5px;">Total number of currently open credit card accounts</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">num_cc_carrying_balance</td>
+    <td style="border: 1px solid black; padding: 5px;">Number of credit cards that are carrying a balance</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">num_mort_accounts</td>
+    <td style="border: 1px solid black; padding: 5px;">Number of mortgage accounts</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">account_never_delinq_percent</td>
+    <td style="border: 1px solid black; padding: 5px;">Percent of all lines of credit where the applicant was never delinquent</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">tax_liens</td>
+    <td style="border: 1px solid black; padding: 5px;">a numeric vector</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">public_record_bankrupt</td>
+    <td style="border: 1px solid black; padding: 5px;">Number of bankruptcies listed in the public record for this applicant</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">loan_purpose</td>
+    <td style="border: 1px solid black; padding: 5px;">The category for the purpose of the loan</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">application_type</td>
+    <td style="border: 1px solid black; padding: 5px;">The type of application: either individual or joint</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">loan_amount</td>
+    <td style="border: 1px solid black; padding: 5px;">The amount of the loan the applicant received</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">term</td>
+    <td style="border: 1px solid black; padding: 5px;">The number of months of the loan the applicant received</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">interest_rate</td>
+    <td style="border: 1px solid black; padding: 5px;">Interest rate of the loan the applicant received</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">installment</td>
+    <td style="border: 1px solid black; padding: 5px;">Monthly payment for the loan the applicant received</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">grade</td>
+    <td style="border: 1px solid black; padding: 5px;">Grade associated with the loan</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">sub_grade</td>
+    <td style="border: 1px solid black; padding: 5px;">Detailed grade associated with the loan</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">issue_month</td>
+    <td style="border: 1px solid black; padding: 5px;">Month the loan was issued</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">loan_status</td>
+    <td style="border: 1px solid black; padding: 5px;">Status of the loan</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">initial_listing_status</td>
+    <td style="border: 1px solid black; padding: 5px;">Initial listing status of the loan. (I think this has to do with whether the lender provided the entire loan or if the loan is across multiple lenders.)</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">disbursement_method</td>
+    <td style="border: 1px solid black; padding: 5px;">Dispersement method of the loan</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">balance</td>
+    <td style="border: 1px solid black; padding: 5px;">Current balance on the loan</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">paid_total</td>
+    <td style="border: 1px solid black; padding: 5px;">Total that has been paid on the loan by the applicant</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">paid_principal</td>
+     <td style="border: 1px solid black; padding: 5px;">The difference between the original loan amount and the current balance on the loan</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">paid_interest</td>
+    <td style="border: 1px solid black; padding: 5px;">The amount of interest paid so far by the applicant</td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 5px; font-weight: bold;">paid_late_fees</td>
+    <td style="border: 1px solid black; padding: 5px;">Late fees paid by the applicant</td>
+  </tr>
+</table>
+
+### Explore data ###
+
+First, we investigate the data 
+
+```{r loan}
+
+data=read.csv("loans_full_schema.csv")
+dim(data)
+```
+
+We have a dataset with 55 variablels (columns) and 10000 observations (lines) then we investigate for nan and null values in each column. 
+
+
+```{r NaN, warning=FALSE, message=FALSE}
+library(readr)
+library(dplyr)
+
+data <- read_csv("loans_full_schema.csv", col_names = TRUE)
+
+print(paste("samples before preprocessing: ", nrow(data)))
+print(paste("number of features:", ncol(data)))
+
+# explore every feature - count values and nan count
+for (col in colnames(data)) {
+  print(col)
+  print(paste("nan values ", sum(is.na(data[, col]))))
+  print(paste("number of unique values: ", length(unique(data[, col]))))
+  print(paste("null values: ", sum(is.na(data[, col]))))
+}
+```
+The exploration of the data showed that the following variables contain null values.
+
+
+<style>
+  .center-table {
+    margin: 0 auto; /* Center the table on the page */
+  }
+</style>
+<table class="center-table" border="1" style="border-collapse: collapse;">
+  <tr>
+    <th style="font-weight: bold;">Variable</th>
+    <th style="font-weight: bold; text-align: center;">No of null/nan values</th>
+  </tr>
+  <tr>
+    <td style="font-weight: bold;">emp_title</td>
+    <td style= "text-align: center;">833</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold;">emp_length</td>
+    <td style= "text-align: center;">817</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold;">debt_to_income</td>
+    <td style= "text-align: center;">24</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold;">annual_income_joint</td>
+    <td style= "text-align: center;">8505</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold;">verification_income_joint</td>
+    <td style= "text-align: center;">8545</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold;">debt_to_income_joint</td>
+    <td style= "text-align: center;">8505</td>
+  </tr>
+   <tr>
+    <td style="font-weight: bold;">months_since_last_delinq</td>
+    <td style= "text-align: center;">5658</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold;">months_since_last_credit_inquiry</td>
+    <td style= "text-align: center;">1271</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold;">months_since_90d_late</td>
+    <td style= "text-align: center;">7715</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold;">num_accounts_120d_past_due</td>
+    <td style= "text-align: center;">318</td>
+  </tr>
+</table>
+
+<br>
+Following, we will examine the data types of the variables to determine whether they are numeric, categorical, or alphanumeric.
+
+```{r datatype, echo=TRUE, message=FALSE, warning=FALSE}
+col_names <- colnames(data)
+col_types <- sapply(data, class)
+
+for (i in 1:length(col_names)) {
+  print(paste(col_names[i], ":", col_types[i]))
+}
+
+
+```
+We will eliminate  the 833 null values of the *emp_title* variable by removing the rows with null values as we don't have enough information about the job of the borrower. 
+
+<br>
+The *verification_income_joint* is a character variable that express the type of verification of the joint income but using the *application_type* we can determine if the application is individual or joint. If the application type is individual we replace the null value with the corresponding value of *verified_income*. 
+
+```{r, message=FALSE,warning=FALSE}
+for (i in 1:10000){
+  if (data[i,"application_type"] == "individual"){
+    data[i,"verification_income_joint"]=data[i,"verified_income"]
+  }
+}
+sum(is.na(data[,9]))
+
+```
+As a result, we have 40 Null values of *verification_income_joint* that we will remove them. 
+<br>
+
+Regarding the numeric variables with Null values
+
+* *emp_length*
+* *debt_to_income*
+* *annual_income_joint*
+* *debt_to_income_joint*
+* *months_since_last_delinq*
+* *months_since_90d_late*
+* *num_accounts_120d_past_due*
+* *months_since_last_credit_inquiry*
+<br>
+
+we will describe the steps were carried out in order to eliminate the Null values for each variable. 
+<br>
+At first, we visualize the *emp_length* and consider its distribution. The histogram shows that the data are left-skewed so in this case we replace the null values with the mean value.
+```{r, message=FALSE,warning=FALSE}
+library(ggplot2)
+library(tidyr)
+ggplot(data=data.frame(data$emp_length), aes(data$emp_length))+ geom_histogram(bins=5,fill = "darkred",
+                 alpha = 0.5,
+                 color = "black",
+                 size = 1) +
+  labs(title = "Histogram of emp_length before cleaning",
+       x = "length of time the borrower has been employed",
+       y = "Frequency") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 18,
+                                  face = "bold"),
+        axis.title = element_text(size = 16),
+        axis.text = element_text(size = 14))
+
+mean_emp_length= mean(data$emp_length, na.rm=TRUE)
+mean_emp_length
+for (i in 1:10000){
+  if (is.na(data[i,"emp_length"])){
+    data[i,"emp_length"]=mean_emp_length
+  }
+} 
+
+ggplot(data=data.frame(data$emp_length), aes(data$emp_length))+ geom_histogram(bins=5,fill = "blue",
+                 alpha = 0.5,
+                 color = "black",
+                 size = 1) +
+  labs(title = "Histogram of emp_length",
+       x = "length of time the borrower has been employed",
+       y = "Frequency") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 18,
+                                  face = "bold"),
+        axis.title = element_text(size = 16),
+        axis.text = element_text(size = 14))
+```
+Similarly, we visualize the *debt_to_income* and by its distribution we discern that the data are normally distributed data with some outliers so in this case we replace the null values with the median value.
+```{r warning=FALSE, message=FALSE}
+
+ggplot(data=data.frame(data$debt_to_income), aes(data$debt_to_income))+ geom_boxplot(outlier.colour = "darkred",
+                 outlier.shape =  21,
+                 outlier.size = 2) +
+  labs(title = "Boxplot of debt_to_income before cleaning",
+       x = "debt-to-income ratio") +
+  theme_classic()
+
+
+debt_to_income_median= median(data$debt_to_income, na.rm=TRUE)
+debt_to_income_median
+for (i in 1:10000){
+  if (is.na(data$debt_to_income[i])){
+    data[i,"debt_to_income"]=debt_to_income_median
+  }
+} 
+```
+The *annual_income_joint* is a variable that express the annual income of the two parties applying. By  *application_type* we can determine if the application is individual or joint. If the application type is individual we replace the Null value with the corresponding value of *annual_income*. As a result, there is no null value in the column *annual_income_joint*.
+```{r, message=FALSE,warning=FALSE}
+for (i in 1:10000){
+  if (data[i,"application_type"] == "individual"){
+    data[i,"annual_income_joint"]=data[i,"annual_income"]
+  }
+}
+sum(is.na(data$annual_income_joint))
+
+```
+The *debt_to_income_joint* is a variable that express the debt-to-income ratio of the joint income. By  *application_type* we can determine if the application is individual or joint. If the application type is individual we replace the Null value with the corresponding value of *debt_to_income*. As a result, there is no null value in the column *annual_income_joint*.
+```{r, message=FALSE,warning=FALSE}
+for (i in 1:10000){
+  if (data[i,"application_type"] == "individual"){
+    data$debt_to_income_joint[i]=data$debt_to_income[i]
+  }
+}
+sum(is.na(data$debt_to_income_joint))
+```
+We plot a histogram of the variable *months_since_last_delinq* to visualize the distribution of its values. The histogram shows that the values are skewed to the right with a peak at around 35 months. As a result, we replace the NAs with the median value.
+```{r, message=FALSE, warning=FALSE}
+
+ggplot(data=data.frame(data$months_since_last_delinq), aes(data$months_since_last_delinq))+ geom_histogram(bins=20,fill = "darkgreen",
+                 alpha = 0.5,
+                 color = "black",
+                 size = 1) +
+  labs(title = "Histogram of months_since_last_delinq",
+       x = "Months since the last delinquency",
+       y = "Frequency") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 18,
+                                  face = "bold"),
+        axis.title = element_text(size = 16),
+        axis.text = element_text(size = 14))
+
+median_months_since_last_delinq= median(data$months_since_last_delinq, na.rm=TRUE)
+median_months_since_last_delinq
+for (i in 1:10000){
+  if (is.na(data[i,"months_since_last_delinq"])){
+    data[i,"months_since_last_delinq"]=median_months_since_last_delinq
+  }
+} 
+
+```
+Next, to understand the distribution of values for *months_since_90d_late*, we create a histogram. The plot shows that the distribution of the variable is approximately normal so we replace the Null values with the mean of the non-null values for that variable.
+
+```{r, message=FALSE, warning=FALSE}
+
+ggplot(data=data.frame(data$months_since_90d_late), aes(data$months_since_90d_late))+ geom_histogram(bins=20,fill = "darkorange",
+                 alpha = 0.5,
+                 color = "chocolate",
+                 size = 1) +
+  labs(title = "Histogram of months_since_90d_late",
+       x = "Months since the last time the applicant was 90 days late on a payment",
+       y = "Frequency") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 18,
+                                  face = "bold"),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 14))
+
+mean_months_since_90d_late= mean(data$months_since_90d_late, na.rm=TRUE)
+mean_months_since_90d_late
+for (i in 1:10000){
+  if (is.na(data[i,"months_since_90d_late"])){
+    data[i,"months_since_90d_late"]=round(mean_months_since_90d_late)
+  }
+} 
+
+```
+Following, we create the boxplot of the *num_accounts_120d_past_due*. The plot shows that the all the values of the data set are 0. So we replace the null values with 0. 
+
+```{r, message=FALSE, warning=FALSE}
+
+ggplot(data=data.frame(data$num_accounts_120d_past_due), aes(data$num_accounts_120d_past_due))+ geom_boxplot(outlier.colour = "deeppink3",
+                 outlier.shape =  21,
+                 outlier.size = 2) +
+  labs(title = "Boxplot of num_accounts_120d_past_due",
+       x = " Number of current accounts that are 120 days past due") +
+  theme_classic()
+
+for (i in 1:10000){
+  if (is.na(data$num_accounts_120d_past_due[i])){
+    data$num_accounts_120d_past_due[i]=0
+  }
+} 
+
+```
+Following, we create the boxplot of the *months_since_last_credit_inquiry*. The plot shows that the all the values of the data set are 0. So we replace the null values with 0. 
+
+```{r, message=FALSE, warning=FALSE}
+
+ggplot(data=data.frame(data$months_since_last_credit_inquiry), aes(data$months_since_last_credit_inquiry))+ geom_histogram(bins=20,fill = "deeppink3",
+                 alpha = 0.5,
+                 color = "deeppink4",
+                 size = 1) +
+  labs(title = "Histogram of months_since_last_credit_inquiry",
+       x = "Number of months since the last credit inquiry on this applicant ",
+       y = "Count") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 18,
+                                  face = "bold"),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 14))
+
+median_months_since_last_inquiry= median(data$months_since_last_credit_inquiry, na.rm=TRUE)
+median_months_since_last_inquiry
+for (i in 1:10000){
+  if (is.na(data[i,"months_since_last_credit_inquiry"])){
+    data[i,"months_since_last_credit_inquiry"]=round(median_months_since_last_inquiry)
+  }
+}  
+
+```
+
+Finally, we remove the observations with Null value and the final dataset has 9133 observations and 55 features.
+
+```{r, message=FALSE,warning=FALSE}
+
+
+data=na.omit(data)
+print(paste("data after without Null values:", nrow(data)))
+print(paste("number of features:", ncol(data)))
+```
+
+## Visualization of the data ##
+
+We plot a histogram of the variable *loan_amount* to visualize the distribution of the loan amounts that applicants received. As shown in the plot, the majority of the loans are between `r paste0('$',8500 )` and `r paste0('$',25000 )`.  Approximately, the median value is around `r paste0('$',14000 )'. 
+
+```{r, message=FALSE,warning=FALSE}
+ggplot(data=data.frame(data$loan_amount), aes(data$loan_amount))+ geom_histogram(bins=40,fill = "deepskyblue",
+                 alpha = 0.5,
+                 color = "deepskyblue2",
+                 size = 1) +
+  labs(title = "Histogram of loan_amount",
+       x = "Loan amount that applicants received",
+       y = "Count") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 18,
+                                  face = "bold"),
+        axis.title = element_text(size = 16),
+        axis.text = element_text(size = 14))
+
+```
+Following, we investigate the purposes that applicants took a loan. The majority of the applicants (51.4%) obtain a loan to pay off their dept and the 22.7% obtain a loan to pay off their credit card. 
+
+```{r,message=FALSE, warning=FALSE}
+library(DescTools)
+Desc(data$loan_purpose, main = "Loan purposes", plotit = TRUE)
+```
+<br>
+After that, we will investigate the states of USA that have the highest and the lowest distributions of loan amounts. It is shown that states of ILINOIS, ARIZONA, MINNESOTA, OHAIO and IDAHO have the highest amounts of loans while states of PENNSYLVANIA, VEMRONT and SOUTH DAKOTA have the lowest loan amounts. 
+
+```{r, warning=FALSE,message=FALSE}
+library(usmap)
+values=data$loan_amount
+state=data$state
+plot_usmap(data=data.frame(state, values), color="red", labels=TRUE)  + scale_fill_continuous( low = "white", high = "red", name = "Loan amount", label = scales::comma) + labs(title = "US States", subtitle = "Loan amount per US state.") + theme(legend.position = "right")
+```
+<br>
+We investigate the status of the loan per state of US. The plot shows that California has the highest number of current and fully paid loans while the states of Wyoming, Vermont, South Dakota, Delaware, Washington, North Dakota and Montana have  the minimum number of current loans. 
+
+```{r, message=FALSE,warning=FALSE}
+
+ggplot(data, aes(x=state,fill=loan_status))+ 
+  labs(x="Loan Status", y="No of Loans")+
+  geom_bar() +
+  coord_flip()
+
+```
+<br>
+
+In the following plot, it is shown that the majority of applicants with dept to income ratio between (0,35) applied for a loan of no more than $20,000 and the majority of these loans have current status. Also the majority of fully paid loans are in this range. It is obvious that the highest loan amounts have status current. 
+
+```{r, message=FALSE,warning=FALSE}
+
+my.colors <- RColorBrewer::brewer.pal(n = 6,name = "Paired")
+names(my.colors) <- levels(as.factor(data$loan_status))
+plt <- ggplot(data, aes(debt_to_income, loan_amount, color = loan_status)) + geom_point()+
+  labs(x = "Debt-to-income ratio", y = "Loan amount", title = "Scatterplot of debt-to-income and loan amount") +
+  scale_x_continuous(limits = c(0, 95), breaks = seq(0, 95, 5)) +
+  scale_y_continuous(limits = c(0, 41000), breaks = seq(0, 41000, 10000)) +
+  theme_bw() +
+  theme(legend.position = "right")
+plt
+```
+
+## Build of models ##
+
+After segmenting the data into training and testing sets, we began our modeling by building a logistic regression model. First, we make two categories of interest_rate, low and high, then we remove some outliers observations and the following variables *emp_title*, *interest_rate*, *state*, *sub_grade*, *num_accounts_120d_past_due*, *num_accounts_30d_past_due*, *public_record_bankrupt* and finally we build a logistic regression model and a logistic regression model using backwards method. The accuracies of the two models are very low. 
+
+```{r, message=FALSE,warning=FALSE}
+int_rate=c()
+for (i in 1:nrow(data)){
+  if (data$interest_rate[i]<15 | data$interest_rate[i]==15 ){
+    int_rate[i]="low"}
+  else{
+    int_rate[i]="high"
+  
+  }
+}
+int_rate=factor(int_rate)
+
+data$int_rate=int_rate
+
+
+library(knitr)
+library(tidyverse)
+library(ggplot2)
+library(mice)
+library(lattice)
+library(reshape2)
+library(DataExplorer)
+
+library(caTools)
+
+
+data1=data
+
+data1$state=(factor(data1$state))
+data1$verified_income=(factor(data1$verified_income))
+data1$verification_income_joint=(factor(data1$verification_income_joint))
+data1$application_type=(factor(data1$application_type))
+data1$issue_month=(factor(data1$issue_month))
+data1$loan_purpose=(factor(data1$loan_purpose))
+data1$disbursement_method=(factor(data1$disbursement_method))
+data1$grade=(factor(data1$grade))
+data1$sub_grade=(factor(data1$sub_grade))
+data1$loan_status=(factor(data1$loan_status))
+data1$homeownership=(factor(data1$homeownership))
+data1$initial_listing_status=factor((data1$initial_listing_status))
+
+data1=as.data.frame(data1)
+library(dplyr)
+data1= select(data1, -emp_title, -interest_rate,-state,-sub_grade,-num_accounts_120d_past_due,-num_accounts_30d_past_due,-public_record_bankrupt)
+set.seed(1234)
+ind <- sample(2, nrow(data1), replace = T, prob = c(0.7, 0.3))
+train <- data1[ind == 1,]
+test <- data1[ind == 2,]
+
+cooksd <- cooks.distance(glm(int_rate ~ ., family = "binomial", data = train))
+
+plot(cooksd,pch="*",  cex=2, main="Influential Obs by Cooks distance")  
+abline(h = 4*mean(cooksd, na.rm=T), col="red")
+outliers <- rownames(train[cooksd > 4*mean(cooksd, na.rm=T), ])
+train=train[!(row.names(train) %in% outliers),]
+```
+
+\tiny
+
+```{r, warning=FALSE, message=FALSE}
+model <- glm(int_rate ~ ., family = "binomial", train)
+summary(model)
+backwards= step(model, direction="backward",trace=0 )
+summary(backwards)
+## to predict using logistic regression model, probablilities obtained
+
+log.predictions <- predict(model, test, type="response")
+
+## Look at probability output
+head(log.predictions, 10)
+
+log.predictions2 <- predict(backwards, test, type="response")
+
+## Look at probability output
+head(log.predictions, 10)
+
+log.prediction.rd <- ifelse(log.predictions > 0.5, 1, 0)
+head(log.prediction.rd, 10)
+
+table(log.prediction.rd, test[,18])
+accuracy <- table(log.prediction.rd, test[,18])
+sum(diag(accuracy))/sum(accuracy)
+
+head(log.predictions2, 10)
+
+log.prediction.rd2 <- ifelse(log.predictions2 > 0.5, 1, 0)
+head(log.prediction.rd2, 10)
+
+table(log.prediction.rd2, test[,18])
+accuracy2 <- table(log.prediction.rd2, test[,18])
+sum(diag(accuracy2))/sum(accuracy2)
+
+
+```
+\normalsize
+As a result, we need to build a better model. It is necessary to improve the cleaning of the data in order to ensure the accuracy and reliability of the analysis. This may involve handling missing values, scaling numeric variables and correcting the skewness in data  and encoding categorical variables. Additionally, it may be beneficial to perform feature selection to select the most relevant variables for the model. 
+
+<br>
+Unfortunately, the results of this project did not meet the desired standards. If given more time, I would have implemented additional changes in order to improve the results. I sincerely apologize for any inconvenience this may have caused.
